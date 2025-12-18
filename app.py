@@ -47,6 +47,21 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(cleanup_old_files, "interval", hours=6)
 scheduler.start()
 
+
+def keep_alive():
+    while True:
+        try:
+            requests.get("https://teamdev.sbs/ping")
+        except:
+            pass
+        time.sleep(25)  # Less than 50 sec Render timeout
+
+threading.Thread(target=keep_alive, daemon=True).start()
+
+@app.route("/ping")
+def ping():
+    return "OK", 200
+    
 # Beautiful Download Page
 @app.get("/d/{file_id}")
 async def download_page(file_id: str):
