@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Get Your Website</title>
+    <style>
+        body { font-family: Arial; text-align: center; margin-top: 50px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Your Generated Website: {{ filename }}</h1>
+    <p>View contents below or download.</p>
+    <!-- Placeholder for viewing (e.g., iframe for index.html if unzipped server-side; skip for now) -->
+    <a href="/downloads/{{ filename }}" download><button>Download ZIP</button></a>
+    <script>
+        const isChrome = {{ is_chrome|tojson }};
+        if (isChrome) {
+            alert("Using Chrome? Download will start automatically.");
+            window.location.href = "/downloads/{{ filename }}";
+        }
+    </script>
+</body>
+</html>
