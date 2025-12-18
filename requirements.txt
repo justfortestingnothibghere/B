@@ -1,0 +1,6 @@
+Flask
+pyTelegramBotAPI
+google-generativeai
+requests
+gunicorn
+Werkzeug
