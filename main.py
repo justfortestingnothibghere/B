@@ -216,8 +216,7 @@ This bot helps you manage advanced shell features easily.
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 ADMIN_URL = "https://t.me/mr_arman_08"
-GIF_PATH = "https://media2.giphy.com/media/v1.Y2lkPTZjMDliOTUyc2QzOG0zZHptZ3Eyem8wdHpnYmg0eDRqMHp0eGRtN3gyc3VnZXMweCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/GCc1w9NetuzPIuXw4G/giphy.gif"   # animated gi
-
+GIF_PATH = "images/gif.gif"
 @bot.message_handler(commands=['premium'])
 def handle_premium(message):
     user_id = message.from_user.id
