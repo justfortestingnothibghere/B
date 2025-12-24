@@ -191,8 +191,15 @@ def attach(bot, conn, admins):
 
     # CAPTCHA ANSWER HANDLING
         if user_id in captcha_sessions:
-            if text == captcha_sessions[user_id]:
-                cur.execute("UPDATE users SET verified=1 WHERE user_id=?", (user_id,))
+            if text.lower() == captcha_sessions[user_id].lower():
+                cur.execute(
+            "INSERT OR IGNORE INTO users (user_id, verified) VALUES (?, 0)",
+            (user_id,)
+                )
+                cur.execute(
+            "UPDATE users SET verified=1 WHERE user_id=?",
+            (user_id,)
+                )
                 conn.commit()
                 del captcha_sessions[user_id]
                 bot.reply_to(message, "✅ Verification successful")
