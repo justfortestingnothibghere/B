@@ -217,56 +217,107 @@ This bot helps you manage advanced shell features easily.
             parse_mode="HTML"
         )
       
+import time
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+ADMIN_URL = "https://t.me/mr_arman_08"
+GIF_PATH = "images/premium.gif"   # animated gif
+
 @bot.message_handler(commands=['premium'])
 def handle_premium(message):
     user_id = message.from_user.id
+
+    # Loading animation message
+    loading = bot.reply_to(
+        message,
+        "⚡ <b>Initializing Premium Interface</b>\n\n▰▱▱▱▱▱▱▱▱▱",
+        parse_mode="HTML"
+    )
+
+    frames = [
+        "▰▱▱▱▱▱▱▱▱▱",
+        "▰▰▱▱▱▱▱▱▱▱",
+        "▰▰▰▱▱▱▱▱▱▱",
+        "▰▰▰▰▱▱▱▱▱▱",
+        "▰▰▰▰▰▱▱▱▱▱",
+        "▰▰▰▰▰▰▱▱▱▱",
+        "▰▰▰▰▰▰▰▱▱▱",
+        "▰▰▰▰▰▰▰▰▱▱",
+        "▰▰▰▰▰▰▰▰▰▱",
+        "▰▰▰▰▰▰▰▰▰▰"
+    ]
+
+    for bar in frames:
+        time.sleep(0.12)
+        bot.edit_message_text(
+            f"⚡ <b>Initializing Premium Interface</b>\n\n{bar}",
+            message.chat.id,
+            loading.message_id,
+            parse_mode="HTML"
+        )
+
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(
+        InlineKeyboardButton("💬 Contact Admin", url=ADMIN_URL)
+    )
+
     if is_premium(user_id):
-        cur.execute('SELECT premium_until FROM users WHERE user_id = ?', (user_id,))
+        cur.execute(
+            "SELECT premium_until FROM users WHERE user_id = ?",
+            (user_id,)
+        )
         until = cur.fetchone()[0]
-        msg = f'''
-⭐ <b>Premium Status: Active</b>
 
-<b>Expires:</b> {until}
+        caption = f"""
+🚀 <b>PREMIUM STATUS: ACTIVE</b>
+━━━━━━━━━━━━━━━━━━━
+🟢 <b>Access Level:</b> ELITE
+⏳ <b>Valid Until:</b> <code>{until}</code>
 
-<b>Premium Benefits:</b>
-• 2GB file uploads (vs 100MB)
-• High-speed operations
-• Sudo access
-• Priority support
-• Advanced features
-'''
+⚡ <b>Unlocked Capabilities</b>
+━━━━━━━━━━━━━━━━━━━
+📦 2GB Upload Limit
+🚄 Ultra-Fast Processing
+🛡 Sudo / Admin Access
+🎧 Priority Support
+🧠 Advanced Features
+
+✨ <i>System running at maximum power.</i>
+"""
     else:
-        msg = '''
-🆓 <b>Free Plan</b>
+        caption = """
+🆓 <b>FREE ACCESS MODE</b>
+━━━━━━━━━━━━━━━━━━━
+🟡 <b>Access Level:</b> BASIC
 
-<b>Limitations:</b>
-• 100MB file uploads
-• Standard speed
-• No sudo access
+⚠️ <b>Current Limits</b>
+━━━━━━━━━━━━━━━━━━━
+📦 100MB Upload Limit
+🐢 Normal Speed
+🔒 No Sudo Access
 
-<b>Upgrade by referring users!</b>
-Use /referrals to check your progress
-'''
-    bot.reply_to(message, msg)
+🚀 <b>Upgrade to Premium</b>
+━━━━━━━━━━━━━━━━━━━
+Unlock elite power now 👇
+"""
 
-@bot.message_handler(commands=['referrals'])
-def handle_referrals(message):
-    user_id = message.from_user.id
-    count = get_referral_count(user_id)
-    cur.execute('SELECT referral_code FROM users WHERE user_id = ?', (user_id,))
-    ref_code = cur.fetchone()[0]
-    
-    msg = f'''
-📊 <b>Referral Statistics</b>
+        keyboard.add(
+            InlineKeyboardButton("🛒 Buy Premium", url=ADMIN_URL)
+        )
 
-<b>Total Referrals:</b> {count}
-<b>Next Reward:</b> {'10 days Premium (20 referrals)' if count >= 5 else '1 day Premium (5 referrals)'}
+    # Remove loading message
+    bot.delete_message(message.chat.id, loading.message_id)
 
-<b>Your Link:</b>
-<code>https://t.me/{bot.get_me().username}?start={ref_code}</code>
-'''
-    bot.reply_to(message, msg)
-
+    # Send animated GIF with caption
+    with open(GIF_PATH, "rb") as gif:
+        bot.send_animation(
+            message.chat.id,
+            gif,
+            caption=caption,
+            parse_mode="HTML",
+            reply_markup=keyboard
+  )
+      
 @bot.message_handler(commands=['help'])
 def handle_help(message):
     help_text = '''
