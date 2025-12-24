@@ -123,25 +123,34 @@ def handle_start(message):
     first_name = user.first_name or ""
     username = f"@{user.username}" if user.username else ""
 
+    # 🔄 Attractive loading animation
     loading_msg = bot.send_message(
         message.chat.id,
-        "⏳ <b>Pʟᴇᴀsᴇ Wᴀɪᴛ...</b>\nPʀᴏᴄᴇssɪɴɢ...",
+        "🚀 <b>Initializing Bot...</b>\n\n▰▱▱▱▱▱▱▱▱▱",
         parse_mode="HTML"
     )
 
-    animation = ["⏳ Pʀᴏᴄᴇssɪɴɢ.", "⏳ Pʀᴏᴄᴇssɪɴɢ..", "⏳ Pʀᴏᴄᴇssɪɴɢ..."]
-    for frame in animation:
+    progress_frames = [
+        "🚀 <b>Initializing Bot...</b>\n\n▰▰▱▱▱▱▱▱▱▱",
+        "⚙️ <b>Loading Features...</b>\n\n▰▰▰▱▱▱▱▱▱▱",
+        "🔐 <b>Setting Up Profile...</b>\n\n▰▰▰▰▱▱▱▱▱▱",
+        "📡 <b>Connecting Servers...</b>\n\n▰▰▰▰▰▱▱▱▱▱",
+        "✅ <b>Almost Ready...</b>\n\n▰▰▰▰▰▰▰▰▰▱",
+        "🎉 <b>Welcome!</b>\n\n▰▰▰▰▰▰▰▰▰▰"
+    ]
+
+    for frame in progress_frames:
         bot.edit_message_text(
             frame,
             chat_id=message.chat.id,
             message_id=loading_msg.message_id,
             parse_mode="HTML"
         )
-        time.sleep(0.5)
+        time.sleep(0.6)
 
+    # 📁 User directory
     user_dir = f'users/{user_id}'
-    if not os.path.exists(user_dir):
-        os.makedirs(user_dir)
+    os.makedirs(user_dir, exist_ok=True)
 
     cur.execute(
         'INSERT OR IGNORE INTO users (user_id, current_dir) VALUES (?, ?)',
@@ -149,10 +158,10 @@ def handle_start(message):
     )
     conn.commit()
 
+    # 🔗 Referral handling
     if len(message.text.split()) > 1:
-        ref_code = message.text.split()[1]
         try:
-            referrer_id = int(ref_code)
+            referrer_id = int(message.text.split()[1])
             if referrer_id != user_id:
                 cur.execute(
                     'INSERT OR IGNORE INTO referrals (referrer, referred) VALUES (?, ?)',
@@ -163,39 +172,41 @@ def handle_start(message):
         except ValueError:
             pass
 
+    # 🆔 Referral code
     cur.execute('SELECT referral_code FROM users WHERE user_id = ?', (user_id,))
     row = cur.fetchone()
 
-    if row and row[0]:
-        ref_code = row[0]
-    else:
-        ref_code = str(user_id)
-        cur.execute(
-            'UPDATE users SET referral_code = ? WHERE user_id = ?',
-            (ref_code, user_id)
-        )
-        conn.commit()
+    ref_code = row[0] if row and row[0] else str(user_id)
+    cur.execute(
+        'UPDATE users SET referral_code = ? WHERE user_id = ?',
+        (ref_code, user_id)
+    )
+    conn.commit()
 
     caption = f"""
-<b>Hey</b> {first_name} 🚀
-<i>• Tʜᴀɴᴋs Fᴏʀ Jᴏɪɴɪɴɢ Mᴇ.</i>
+<b>Hey {first_name} 🚀</b>
 
-🤖 <b>Iɴᴛʀᴏᴅᴜᴄᴇ</b>
-Hᴇʏ Iᴀᴍ <b>Hᴏsᴛ X Bᴏᴛ</b> Hᴇʀᴇ Tᴏ Gɪᴠᴇ Yᴏᴜ Rᴇᴀʟ Vᴘs Exᴘᴇʀɪᴇɴᴄᴇ Jᴜsᴛ Tʏᴘᴇ /help Aɴᴅ Kɴᴏᴡ Tʜᴇ Bᴏᴛ Tʜᴀɴᴋs Bᴀʙʏ 💗
+<i>Thanks for joining me!</i>
 
-🔗 <b>Yᴏᴜʀ Rᴇғᴇʀ Cᴏᴅᴇ:</b>
+🤖 <b>Host X Bot</b>
+I provide a <b>real VPS experience</b>.
+Type /help to explore all features 💗
+
+🔗 <b>Your Refer Code:</b>
 <code>{ref_code}</code>
 
-📎 <b>Rᴇғᴇʀʀᴀʟ Lɪɴᴋ :</b>
+📎 <b>Referral Link:</b>
 <code>https://t.me/{bot.get_me().username}?start={ref_code}</code>
 """
 
+    # 🧹 Remove loading message
     bot.delete_message(message.chat.id, loading_msg.message_id)
 
-    with open("images/start.jpg", "rb") as photo:
-        bot.send_photo(
+    # 🎬 Send GIF instead of image
+    with open("images/start.gif", "rb") as gif:
+        bot.send_animation(
             message.chat.id,
-            photo,
+            gif,
             caption=caption,
             parse_mode="HTML"
         )
