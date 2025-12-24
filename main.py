@@ -124,51 +124,99 @@ def get_user_quota(user_id):
     cur.execute('SELECT disk_quota FROM users WHERE user_id = ?', (user_id,))
     result = cur.fetchone()
     return result[0] if result else (1 * 1024 * 1024 * 1024)  # Default 1GB
-
+  
 @bot.message_handler(commands=['start'])
 def handle_start(message):
-    user_id = message.from_user.id
+    user = message.from_user
+    user_id = user.id
+    first_name = user.first_name or ""
+    username = f"@{user.username}" if user.username else ""
+
+    # --- STEP 1: Send processing message ---
+    loading_msg = bot.send_message(
+        message.chat.id,
+        "⏳ <b>Please wait...</b>\nProcessing...",
+        parse_mode="HTML"
+    )
+
+    # --- STEP 2: Loading animation (edit message) ---
+    animation = ["⏳ Processing.", "⏳ Processing..", "⏳ Processing..."]
+    for frame in animation:
+        bot.edit_message_text(
+            frame,
+            chat_id=message.chat.id,
+            message_id=loading_msg.message_id,
+            parse_mode="HTML"
+        )
+        time.sleep(0.5)
+
+    # --- STEP 3: Create user directory ---
     user_dir = f'users/{user_id}'
     if not os.path.exists(user_dir):
         os.makedirs(user_dir)
-    cur.execute('INSERT OR IGNORE INTO users (user_id, current_dir) VALUES (?, ?)', 
-                (user_id, os.path.abspath(user_dir)))
+
+    cur.execute(
+        'INSERT OR IGNORE INTO users (user_id, current_dir) VALUES (?, ?)',
+        (user_id, os.path.abspath(user_dir))
+    )
     conn.commit()
 
-    # Handle referral
+    # --- STEP 4: Handle referral ---
     if len(message.text.split()) > 1:
         ref_code = message.text.split()[1]
         try:
             referrer_id = int(ref_code)
-            cur.execute('INSERT OR IGNORE INTO referrals (referrer, referred) VALUES (?, ?)', 
-                        (referrer_id, user_id))
-            conn.commit()
-            award_referrals(referrer_id)
+            if referrer_id != user_id:
+                cur.execute(
+                    'INSERT OR IGNORE INTO referrals (referrer, referred) VALUES (?, ?)',
+                    (referrer_id, user_id)
+                )
+                conn.commit()
+                award_referrals(referrer_id)
         except ValueError:
             pass
 
-    # Generate referral code
+    # --- STEP 5: Generate referral code ---
     cur.execute('SELECT referral_code FROM users WHERE user_id = ?', (user_id,))
-    ref_code = cur.fetchone()[0]
-    if not ref_code:
+    row = cur.fetchone()
+
+    if row and row[0]:
+        ref_code = row[0]
+    else:
         ref_code = str(user_id)
-        cur.execute('UPDATE users SET referral_code = ? WHERE user_id = ?', (ref_code, user_id))
+        cur.execute(
+            'UPDATE users SET referral_code = ? WHERE user_id = ?',
+            (ref_code, user_id)
+        )
         conn.commit()
 
-    welcome_msg = f'''
-🚀 <b>Welcome to Advanced Shell Bot!</b>
+    # --- STEP 6: Final caption message ---
+    caption = f"""
+<b>Hey</b> {first_name} {username} 🚀
+<i>• Thanks For Joining Me.</i>
 
-Your referral link: 
+🤖 <b>Introduce Bot</b>
+This bot helps you manage advanced shell features easily.
+
+🔗 <b>Your Refer Code:</b>
+<code>{ref_code}</code>
+
+📎 <b>Referral Link:</b>
 <code>https://t.me/{bot.get_me().username}?start={ref_code}</code>
+"""
 
-📊 <b>Rewards:</b>
-• 5 referrals = 1 day Premium
-• 20 referrals = 10 days Premium
+    # --- STEP 7: Delete loading message ---
+    bot.delete_message(message.chat.id, loading_msg.message_id)
 
-Use /help to see all commands!
-'''
-    bot.reply_to(message, welcome_msg)
-
+    # --- STEP 8: Send image with caption ---
+    with open("images/start.jpg", "rb") as photo:
+        bot.send_photo(
+            message.chat.id,
+            photo,
+            caption=caption,
+            parse_mode="HTML"
+        )
+      
 @bot.message_handler(commands=['premium'])
 def handle_premium(message):
     user_id = message.from_user.id
