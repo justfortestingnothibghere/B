@@ -217,7 +217,6 @@ This bot helps you manage advanced shell features easily.
             parse_mode="HTML"
         )
       
-import time
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 ADMIN_URL = "https://t.me/mr_arman_08"
