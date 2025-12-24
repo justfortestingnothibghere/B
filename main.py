@@ -216,16 +216,16 @@ This bot helps you manage advanced shell features easily.
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 ADMIN_URL = "https://t.me/mr_arman_08"
-GIF_PATH = "images/premium.gif"   # animated gif
+GIF_PATH = "https://media2.giphy.com/media/v1.Y2lkPTZjMDliOTUyc2QzOG0zZHptZ3Eyem8wdHpnYmg0eDRqMHp0eGRtN3gyc3VnZXMweCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/GCc1w9NetuzPIuXw4G/giphy.gif"   # animated gi
 
 @bot.message_handler(commands=['premium'])
 def handle_premium(message):
     user_id = message.from_user.id
 
-    # Loading animation message
+    # Initial loading message (DIFFERENT from frames)
     loading = bot.reply_to(
         message,
-        "⚡ <b>Initializing Premium Interface</b>\n\n▰▱▱▱▱▱▱▱▱▱",
+        "⚡ <b>Initializing Premium Interface</b>\n\n⏳ Starting...",
         parse_mode="HTML"
     )
 
@@ -242,14 +242,23 @@ def handle_premium(message):
         "▰▰▰▰▰▰▰▰▰▰"
     ]
 
+    last_text = ""
+
     for bar in frames:
         time.sleep(0.12)
-        bot.edit_message_text(
-            f"⚡ <b>Initializing Premium Interface</b>\n\n{bar}",
-            message.chat.id,
-            loading.message_id,
-            parse_mode="HTML"
-        )
+        new_text = f"⚡ <b>Initializing Premium Interface</b>\n\n{bar}"
+
+        if new_text != last_text:
+            try:
+                bot.edit_message_text(
+                    new_text,
+                    message.chat.id,
+                    loading.message_id,
+                    parse_mode="HTML"
+                )
+                last_text = new_text
+            except Exception:
+                pass
 
     keyboard = InlineKeyboardMarkup()
     keyboard.add(
@@ -295,15 +304,17 @@ def handle_premium(message):
 ━━━━━━━━━━━━━━━━━━━
 Unlock elite power now 👇
 """
-
         keyboard.add(
             InlineKeyboardButton("🛒 Buy Premium", url=ADMIN_URL)
         )
 
-    # Remove loading message
-    bot.delete_message(message.chat.id, loading.message_id)
+    # Remove loading animation
+    try:
+        bot.delete_message(message.chat.id, loading.message_id)
+    except:
+        pass
 
-    # Send animated GIF with caption
+    # Send premium GIF
     with open(GIF_PATH, "rb") as gif:
         bot.send_animation(
             message.chat.id,
@@ -311,7 +322,7 @@ Unlock elite power now 👇
             caption=caption,
             parse_mode="HTML",
             reply_markup=keyboard
-  )
+        )
       
 @bot.message_handler(commands=['help'])
 def handle_help(message):
